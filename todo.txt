@@ -1,0 +1,11 @@
+changes:
+- added lyrics to entry
+- parses lyrics on mojim using bs4 **
+
+* all credits for lyrics go to mojim.com
+** only songs searched in traditional chinese
+
+todoodles:
+- use musixatch api for eng songs
+- show all search results returned from mojim, not just take first
+- format lyrics for better readability
