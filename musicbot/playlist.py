@@ -9,6 +9,10 @@ from .entry import URLPlaylistEntry
 from .exceptions import ExtractionError, WrongEntryTypeError
 from .lib.event_emitter import EventEmitter
 
+# lyrics parsing
+from urllib.request import urlopen
+from urllib.parse import urlencode
+from bs4 import BeautifulSoup
 
 class Playlist(EventEmitter):
     """
@@ -30,6 +34,84 @@ class Playlist(EventEmitter):
 
     def clear(self):
         self.entries.clear()
+
+    def get_first_result(self, url):
+        response = urlopen(url)
+        html_doc = response.read()
+        soup = BeautifulSoup(html_doc, 'html.parser')
+        span = soup.find_all('a')
+        #moijm has different versions of lyrics base on broswer i think, goes up 1+3(i+1)
+        for x in range(0, 5):
+            index = 3 + (3 * x)
+            print(span[index]['href'])
+            x += 1
+
+        """for elem in span:
+            print(elem['href']) """
+        return "https://mojim.com" + span[3]['href']
+
+    def convert_to_string(self, string):
+        middle = string[2:-1]
+        ret = ""
+        i = 0
+        while i < len(middle):
+            if (middle[i] == '\\'):
+                ret += '%'
+                i += 2
+            else :
+                ret += middle[i]
+                i += 1
+        print("ret is : " + ret)
+        return ret
+
+    def is_song_chinese(self):
+        for char in self.bot.message[6:]:
+            if char < u'\u4e00' or char > u'\u9fff':
+                return False
+
+        return True
+
+    def parse_lyrics(self):
+        if len(self.bot.message) <= 5:
+            return "no lyrics available"
+        else:
+            if self.is_song_chinese() != True:
+                return "no lyrics available"
+            
+        print("utf-g: " + str(self.bot.message[6:].encode('utf-8')))
+        song_name = self.convert_to_string(str(self.bot.message[6:].encode('utf-8')))
+        search_url = "https://mojim.com/" + song_name + ".html?u3"
+        print("search_url is : " + search_url)
+
+
+        """ implementation:
+            if (mandarin) {
+                use mojim to scrap lyrics
+            } else if (eng ) {
+                use musixmatch api to get lyrics
+            } else if (other language.. etc){
+                add other sources.. etc
+            }
+        """
+        # todo: need to figure out where the bot gets the input from discord caht
+        #       maybe visit discord api, if cant find it and just make your own listener
+        # once we have listener, use that to make the search url, then get first result
+        # then the parsing shld be fine
+
+        url = self.get_first_result(search_url)
+        print("url is : " + url)
+        response = urlopen(url)
+        html_doc = response.read()
+        soup = BeautifulSoup(html_doc, 'html.parser')
+        lyrics_body = soup.find_all('dl', {'class', 'fsZx1'})
+        lyrics_text = ""
+        for item in lyrics_body:
+            lyrics_text += item.get_text()
+
+        return lyrics_text
+
+    def format_lyrics(self, lyrics):
+        return lyrics
 
     async def add_entry(self, song_url, **meta):
         """
@@ -73,10 +155,16 @@ class Playlist(EventEmitter):
                 elif not content_type.startswith(('audio/', 'video/')):
                     print("[Warning] Questionable content type \"%s\" for url %s" % (content_type, song_url))
 
+        # helper method for lyrics from moijm
+        lyrics = self.parse_lyrics()
+        self.format_lyrics(lyrics)
+        #print("in playlist.py the lyrics from parse lyrics: " + lyrics)
+                    
         entry = URLPlaylistEntry(
             self,
             song_url,
             info.get('title', 'Untitled'),
+            lyrics,
             info.get('duration', 0) or 0,
             self.downloader.ytdl.prepare_filename(info),
             **meta

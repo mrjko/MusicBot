@@ -72,6 +72,8 @@ class MusicBot(discord.Client):
         self.voice_client_connect_lock = asyncio.Lock()
         self.voice_client_move_lock = asyncio.Lock()
 
+        self.message = ""
+
         self.config = Config(config_file)
         self.permissions = Permissions(perms_file, grant_all=[self.config.owner_id])
 
@@ -396,8 +398,8 @@ class MusicBot(discord.Client):
                 newmsg = '%s - your song **%s** is now playing in %s!' % (
                     entry.meta['author'].mention, entry.title, player.voice_client.channel.name)
             else:
-                newmsg = 'Now playing in %s: **%s**' % (
-                    player.voice_client.channel.name, entry.title)
+                newmsg = 'Now playing in %s: **%s** \n Lyrics:%s' % (
+                    player.voice_client.channel.name, entry.title, entry.lyrics)
 
             if self.server_specific_data[channel.server]['last_np_msg']:
                 self.server_specific_data[channel.server]['last_np_msg'] = await self.safe_edit_message(last_np_msg, newmsg, send_if_fail=True)
@@ -1845,6 +1847,8 @@ class MusicBot(discord.Client):
         else:
             self.safe_print("[Command] {0.id}/{0.name} ({1})".format(message.author, message_content))
 
+        self.message = message_content
+        
         user_permissions = self.permissions.for_user(message.author)
 
         argspec = inspect.signature(handler)

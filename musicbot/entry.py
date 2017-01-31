@@ -72,12 +72,13 @@ class BasePlaylistEntry:
 
 
 class URLPlaylistEntry(BasePlaylistEntry):
-    def __init__(self, playlist, url, title, duration=0, expected_filename=None, **meta):
+    def __init__(self, playlist, url, title, lyrics, duration=0, expected_filename=None, **meta):
         super().__init__()
 
         self.playlist = playlist
         self.url = url
         self.title = title
+        self.lyrics = lyrics
         self.duration = duration
         self.expected_filename = expected_filename
         self.meta = meta

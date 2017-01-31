@@ -1,3 +1,5 @@
+ # encoding: utf-8
+
 import os
 import asyncio
 import audioop
@@ -10,6 +12,10 @@ from shutil import get_terminal_size
 
 from .lib.event_emitter import EventEmitter
 
+# lyrics parsing
+from urllib.request import urlopen
+from urllib.parse import urlencode
+from bs4 import BeautifulSoup
 
 class PatchedBuff:
     """
@@ -261,6 +267,8 @@ class MusicPlayer(EventEmitter):
                 # I need to add ytdl hooks
                 self.state = MusicPlayerState.PLAYING
                 self._current_entry = entry
+
+                #print("Song Lyrics (if available):\n" + entry.lyrics) 
 
                 self._current_player.start()
                 self.emit('play', player=self, entry=entry)
