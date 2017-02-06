@@ -39,16 +39,43 @@ class Playlist(EventEmitter):
         response = urlopen(url)
         html_doc = response.read()
         soup = BeautifulSoup(html_doc, 'html.parser')
+        
         span = soup.find_all('a')
         #moijm has different versions of lyrics base on broswer i think, goes up 1+3(i+1)
         for x in range(0, 5):
             index = 3 + (3 * x)
             print(span[index]['href'])
             x += 1
+        
+        print("start debugging:")
+        results = soup.find_all('dd', {'class': ['mxsh_dd1' , 'mxsh_dd2' ]})
 
-        """for elem in span:
-            print(elem['href']) """
-        return "https://mojim.com" + span[3]['href']
+        results_arr = []
+        i = 0
+        for result in results:
+            singer = result.find('span', {'class', 'mxsh_ss2'}).get_text()
+            song_html = result.find('span', {'class', 'mxsh_ss4'})
+            song = song_html.get_text()
+            link = song_html.find('a')
+            results_arr.append(link['href'])
+           # print("%d: %s %s" % i+1, singer, song)
+            print(i+1, singer, song)
+            i += 1
+
+        print("printing the array:")
+        for elem in results_arr:
+            print(elem)
+
+        try:
+            user_input = input("Choose the lyric: ")
+            print("user selected: %d" % int(user_input))
+            user_input = int(user_input)
+        except ValueError:
+            print("invalid input, choosing first lyrics result")
+            return "https://mojim.com" + span[3]['href']
+
+        return "https://mojim.com" + results_arr[user_input - 1]
+        #return "https://mojim.com" + chosen_link
 
     def convert_to_string(self, string):
         middle = string[2:-1]
